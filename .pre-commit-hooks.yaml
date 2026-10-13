@@ -1,0 +1,14 @@
+# Hooks for https://pre-commit.com. Usage in a project's .pre-commit-config.yaml:
+#
+#   repos:
+#     - repo: https://github.com/yassataiseer/envy
+#       rev: v0.1.0
+#       hooks:
+#         - id: envy-audit
+- id: envy-audit
+  name: envy audit
+  description: Block commits of .env files containing leaked or client-exposed secrets.
+  entry: envy audit
+  language: golang
+  files: (^|/)(\.env(\..+)?|[^/]+\.env)$
+  pass_filenames: true

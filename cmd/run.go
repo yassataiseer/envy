@@ -53,6 +53,7 @@ found, 2 if a .env file cannot be read or parsed.`,
 	f.BoolVar(&fl.isolated, "isolated", false, "do not inherit the current environment (bare 'export KEY' lines still pass KEY through)")
 	f.BoolVar(&fl.noOverride, "no-override", false, "keep variables already set in the current environment")
 	c.MarkFlagsMutuallyExclusive("isolated", "no-override")
+	_ = c.RegisterFlagCompletionFunc("env", completeEnvFileFlag)
 	return c
 }
 

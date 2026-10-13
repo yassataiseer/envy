@@ -47,6 +47,7 @@ Exit codes: 0 clean, 1 findings at the failing severity, 2 error.`,
 		Example: `  envy audit
   envy audit .env .env.example --strict
   envy audit .env.production --json`,
+		ValidArgsFunction: completeEnvFiles(-1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				args = []string{".env"}

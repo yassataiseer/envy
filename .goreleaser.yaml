@@ -1,0 +1,75 @@
+# Release with: git tag v0.1.0 && git push origin v0.1.0
+# (the release workflow runs GoReleaser). Test locally with:
+#   goreleaser release --snapshot --clean
+version: 2
+project_name: envy
+
+before:
+  hooks:
+    - go mod tidy
+    - ./scripts/completions.sh
+
+builds:
+  - id: envy
+    main: .
+    binary: envy
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/yassataiseer/envy/cmd.version={{ .Version }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: envy
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - completions/*
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: yassataiseer
+    name: envy
+  prerelease: auto
+
+homebrew_casks:
+  - name: envy
+    repository:
+      owner: yassataiseer
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/yassataiseer/envy
+    description: Diff, audit, and safely inject .env files from the terminal
+    license: MIT
+    skip_upload: auto
+    completions:
+      bash: completions/envy.bash
+      zsh: completions/envy.zsh
+      fish: completions/envy.fish
+    hooks:
+      post:
+        # The binaries are not notarized, so clear Gatekeeper's quarantine flag.
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/envy"]
+          end

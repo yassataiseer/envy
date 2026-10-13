@@ -81,8 +81,8 @@ func Audit(f *envparse.EnvFile, opts Options) []AuditFinding {
 }
 
 // Run evaluates rules against f, drops findings suppressed with an
-// `# envy:ignore [RULE...]` inline comment, removes entropy findings that
-// a more specific rule already explains, and sorts the result by severity
+// `# envy:ignore [RULE...]` inline comment, removes findings that a more
+// specific rule already explains, and sorts the result by severity
 // (most severe first) and then line.
 func Run(f *envparse.EnvFile, rules []Auditor) []AuditFinding {
 	ignores := collectIgnores(f)
@@ -95,7 +95,7 @@ func Run(f *envparse.EnvFile, rules []Auditor) []AuditFinding {
 			all = append(all, fd)
 		}
 	}
-	all = dropRedundantEntropy(all)
+	all = dropRedundant(all)
 	slices.SortStableFunc(all, func(a, b AuditFinding) int {
 		if d := b.Severity.Rank() - a.Severity.Rank(); d != 0 {
 			return d
@@ -105,18 +105,24 @@ func Run(f *envparse.EnvFile, rules []Auditor) []AuditFinding {
 	return all
 }
 
-// dropRedundantEntropy removes SEC002 findings for keys that SEC001 or
-// SEC003 already flag, since those explain the problem more precisely.
-func dropRedundantEntropy(fs []AuditFinding) []AuditFinding {
-	explained := make(map[int]bool)
+// dropRedundant removes findings that a more specific rule on the same line
+// already explains: SEC001 names the credential format when it recognizes
+// one, so it supersedes SEC003, and either supersedes SEC002 entropy.
+func dropRedundant(fs []AuditFinding) []AuditFinding {
+	rules := make(map[int]map[string]bool)
 	for _, f := range fs {
-		if f.RuleID == RuleKnownFormat || f.RuleID == RulePrefixLeak {
-			explained[f.LineNumber] = true
+		if rules[f.LineNumber] == nil {
+			rules[f.LineNumber] = map[string]bool{}
 		}
+		rules[f.LineNumber][f.RuleID] = true
 	}
 	out := fs[:0]
 	for _, f := range fs {
-		if f.RuleID == RuleEntropy && explained[f.LineNumber] {
+		on := rules[f.LineNumber]
+		switch {
+		case f.RuleID == RuleKnownFormat && on[RulePrefixLeak]:
+			continue
+		case f.RuleID == RuleEntropy && (on[RulePrefixLeak] || on[RuleKnownFormat]):
 			continue
 		}
 		out = append(out, f)

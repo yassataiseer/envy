@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -27,7 +28,7 @@ func IsValidKey(key string) bool {
 // defined, a new entry is appended.
 func (f *EnvFile) Set(key, value string) error {
 	raw, q := QuoteValue(value)
-	return f.assign(key, value, raw, q, false)
+	return f.assign(key, value, raw, q, false, "")
 }
 
 // SetFrom assigns src's value to src.Key exactly as written in src,
@@ -36,10 +37,21 @@ func (f *EnvFile) SetFrom(src *EnvEntry) error {
 	if !src.IsAssignment() {
 		return errors.New("envparse: SetFrom requires an assignment entry")
 	}
-	return f.assign(src.Key, src.Value, src.RawValue, src.QuoteType, src.IsBareExport)
+	return f.assign(src.Key, src.Value, src.RawValue, src.QuoteType, src.IsBareExport, "")
 }
 
-func (f *EnvFile) assign(key, value, raw string, q QuoteType, bareExport bool) error {
+// SetFromAfter is like SetFrom, but when src.Key is not yet defined it is
+// inserted directly after the effective definition of anchor rather than
+// at the end of the file, so copied keys keep their neighbors. An empty or
+// undefined anchor appends.
+func (f *EnvFile) SetFromAfter(src *EnvEntry, anchor string) error {
+	if !src.IsAssignment() {
+		return errors.New("envparse: SetFromAfter requires an assignment entry")
+	}
+	return f.assign(src.Key, src.Value, src.RawValue, src.QuoteType, src.IsBareExport, anchor)
+}
+
+func (f *EnvFile) assign(key, value, raw string, q QuoteType, bareExport bool, anchor string) error {
 	if !IsValidKey(key) {
 		return fmt.Errorf("envparse: invalid key %q", key)
 	}
@@ -52,7 +64,7 @@ func (f *EnvFile) assign(key, value, raw string, q QuoteType, bareExport bool) e
 		e.modified = true
 		return nil
 	}
-	f.Entries = append(f.Entries, EnvEntry{
+	entry := EnvEntry{
 		Key:          key,
 		Value:        value,
 		RawValue:     raw,
@@ -60,7 +72,17 @@ func (f *EnvFile) assign(key, value, raw string, q QuoteType, bareExport bool) e
 		IsExported:   bareExport,
 		IsBareExport: bareExport,
 		modified:     true,
-	})
+	}
+	at := len(f.Entries)
+	if a, ok := f.Index[anchor]; ok && anchor != "" {
+		for i := range f.Entries {
+			if &f.Entries[i] == a {
+				at = i + 1
+				break
+			}
+		}
+	}
+	f.Entries = slices.Insert(f.Entries, at, entry)
 	f.Reindex()
 	return nil
 }

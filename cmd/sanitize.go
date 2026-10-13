@@ -36,7 +36,8 @@ Without -o the template is written to standard output.
 Exit codes: 0 success, 2 I/O or parse error.`,
 		Example: `  envy sanitize .env -o .env.example
   envy sanitize .env --keep-safe --mask`,
-		Args: cobra.ExactArgs(1),
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: completeEnvFiles(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSanitize(cmd, args[0], fl)
 			if err != nil {
@@ -49,6 +50,7 @@ Exit codes: 0 success, 2 I/O or parse error.`,
 	f.StringVarP(&fl.output, "output", "o", "", "write the template to `file` instead of standard output")
 	f.BoolVar(&fl.mask, "mask", false, "replace values with type placeholders instead of empty strings")
 	f.BoolVar(&fl.keepSafe, "keep-safe", false, "keep values that do not look sensitive")
+	_ = c.RegisterFlagCompletionFunc("output", completeEnvFileFlag)
 	return c
 }
 

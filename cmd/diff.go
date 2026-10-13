@@ -45,7 +45,8 @@ Exit codes (non-interactive): 0 identical, 1 differences found, 2 error.`,
 		Example: `  envy diff .env .env.example
   envy diff .env .env.example --keys-only --no-interactive
   envy diff .env.staging .env.production --json`,
-		Args: cobra.ExactArgs(2),
+		Args:              cobra.ExactArgs(2),
+		ValidArgsFunction: completeEnvFiles(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDiff(cmd, args[0], args[1], fl)
 		},

@@ -161,6 +161,13 @@ func TestKnownFormatSupersedesEntropy(t *testing.T) {
 	}
 }
 
+func TestPrefixLeakSupersedesKnownFormat(t *testing.T) {
+	fs := findings(t, ".env", "NEXT_PUBLIC_STRIPE_SECRET=sk_test_4eC39HqL_yjWDarjt_T1zdp7dc_AbCdEfGh")
+	if len(fs) != 1 || fs[0].RuleID != RulePrefixLeak || !strings.Contains(fs[0].Message, "Stripe test secret key") {
+		t.Errorf("findings = %+v", fs)
+	}
+}
+
 func TestTemplateEscalation(t *testing.T) {
 	line := "STRIPE_KEY=sk_test_4eC39HqL_yjWDarjt_T1zdp7dc\nDB=postgres://app:s3cr3t@db.prod.internal/app\n"
 	for path, want := range map[string]Severity{".env": SeverityWarning, ".env.example": SeverityCritical, "config/example.env": SeverityCritical} {

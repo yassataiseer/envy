@@ -291,7 +291,7 @@ func TestCopyMissingKeyToRightAndSave(t *testing.T) {
 	}
 
 	fx.press("s")
-	if got, want := readFile(t, fx.rightPath), testRight+"NEXT_PUBLIC_STRIPE_SECRET=sk_123\n"; got != want {
+	if got, want := readFile(t, fx.rightPath), "PORT=8080\nDATABASE_URL=\nNEXT_PUBLIC_STRIPE_SECRET=sk_123\nLOG_LEVEL=debug\n"; got != want {
 		t.Errorf("right file = %q, want %q", got, want)
 	}
 	if readFile(t, fx.leftPath) != testLeft {
@@ -299,6 +299,19 @@ func TestCopyMissingKeyToRightAndSave(t *testing.T) {
 	}
 	if fx.m.dirty[sideRight] || !strings.Contains(fx.screen(), "Saved .env.example") {
 		t.Errorf("not marked saved:\n%s", fx.screen())
+	}
+}
+
+func TestCopyKeepsNeighbors(t *testing.T) {
+	fx := newFixture(t, testLeft, testRight)
+	fx.selectKey(t, "LOG_LEVEL") // after DATABASE_URL in the right file
+	fx.press("tab", "space", "s")
+	want := "PORT=8080\nDATABASE_URL=postgres://localhost/app\nLOG_LEVEL=debug\nNEXT_PUBLIC_STRIPE_SECRET=sk_123\n"
+	if got := readFile(t, fx.leftPath); got != want {
+		t.Errorf("left file = %q, want %q", got, want)
+	}
+	if fx.m.selectedKey() != "LOG_LEVEL" {
+		t.Errorf("cursor moved to %s", fx.m.selectedKey())
 	}
 }
 

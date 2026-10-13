@@ -3,6 +3,7 @@ package envparse
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -114,6 +115,31 @@ func TestSetFromPreservesRaw(t *testing.T) {
 	}
 }
 
+func TestSetFromAfter(t *testing.T) {
+	src := mustParse(t, "A=1\nNEW=x\n")
+	n, _ := src.Get("NEW")
+	tests := []struct{ dst, anchor, want string }{
+		{"A=0\n# about B\nB=2\n", "A", "A=0\nNEW=x\n# about B\nB=2\n"},
+		{"A=0\nA=9\nB=2", "A", "A=0\nA=9\nNEW=x\nB=2"},
+		{"A=\"multi\nline\"\nB=2\n", "A", "A=\"multi\nline\"\nNEW=x\nB=2\n"},
+		{"B=2\n", "A", "B=2\nNEW=x\n"},
+		{"B=2\n", "", "B=2\nNEW=x\n"},
+		{"NEW=old # keep\n", "A", "NEW=x # keep\n"},
+	}
+	for _, tt := range tests {
+		dst := mustParse(t, tt.dst)
+		if err := dst.SetFromAfter(n, tt.anchor); err != nil {
+			t.Fatal(err)
+		}
+		if got := string(dst.Format()); got != tt.want {
+			t.Errorf("dst %q anchor %q:\n got %q\nwant %q", tt.dst, tt.anchor, got, tt.want)
+		}
+		if e, ok := dst.Get("NEW"); !ok || e.Value != "x" {
+			t.Errorf("NEW not indexed after insert into %q", tt.dst)
+		}
+	}
+}
+
 func TestSetFromBareExport(t *testing.T) {
 	src := mustParse(t, "export PATH\n")
 	dst := mustParse(t, "")
@@ -212,8 +238,9 @@ func TestWriteFile(t *testing.T) {
 	if want := "# keep\nA=1\nB=\"new value\"\n"; string(got) != want {
 		t.Errorf("file = %q, want %q", got, want)
 	}
+	unixPerms := runtime.GOOS != "windows"
 	info, _ := os.Stat(path)
-	if info.Mode().Perm() != 0o640 {
+	if unixPerms && info.Mode().Perm() != 0o640 {
 		t.Errorf("perm = %v, want 0640", info.Mode().Perm())
 	}
 	b, _ := f.Get("B")
@@ -231,7 +258,7 @@ func TestWriteFile(t *testing.T) {
 	if err := nf.WriteFile(newPath); err != nil {
 		t.Fatal(err)
 	}
-	if info, _ := os.Stat(newPath); info.Mode().Perm() != 0o600 {
+	if info, _ := os.Stat(newPath); unixPerms && info.Mode().Perm() != 0o600 {
 		t.Errorf("new file perm = %v, want 0600", info.Mode().Perm())
 	}
 }

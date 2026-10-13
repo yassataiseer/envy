@@ -257,13 +257,28 @@ func (m *Model) copySelected(src side) {
 		return
 	}
 	m.pushUndo(dst)
-	if err := m.files[dst].SetFrom(from); err != nil {
+	if err := m.files[dst].SetFromAfter(from, m.anchorFor(r.Key, src, dst)); err != nil {
 		m.undo = m.undo[:len(m.undo)-1]
 		m.setMessage(msgError, "Copy failed: %v", err)
 		return
 	}
 	m.afterEdit(dst, r.Key)
 	m.setMessage(msgInfo, "Copied %s to %s.", r.Key, m.shortName(dst))
+}
+
+// anchorFor returns the nearest key above key in the src file that dst
+// also defines, so a copied key lands next to the same neighbor.
+func (m *Model) anchorFor(key string, src, dst side) string {
+	anchor := ""
+	for _, k := range m.files[src].Keys() {
+		if k == key {
+			break
+		}
+		if _, ok := m.files[dst].Get(k); ok {
+			anchor = k
+		}
+	}
+	return anchor
 }
 
 func (m *Model) deleteSelected() {
