@@ -1,0 +1,72 @@
+{
+  "path": "testdata/rsa_key.env",
+  "entries": [
+    {
+      "key": "SERVICE_NAME",
+      "value": "signer",
+      "raw_value": "signer",
+      "line_number": 1,
+      "end_line": 1,
+      "quote_type": "none",
+      "is_exported": false,
+      "is_comment": false,
+      "is_empty": false
+    },
+    {
+      "key": "",
+      "value": "",
+      "raw_value": "",
+      "raw_comment": "# PEM key stored as a real multi-line value",
+      "line_number": 2,
+      "end_line": 2,
+      "quote_type": "none",
+      "is_exported": false,
+      "is_comment": true,
+      "is_empty": false
+    },
+    {
+      "key": "JWT_PRIVATE_KEY",
+      "value": "-----BEGIN RSA PRIVATE KEY-----\nMIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Qu\nKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQJAIJLixBy2qpFoS4DSmoEm\no3qGy0t6z09AIJtH+5OeRV1be+N4cDYJKffGzDa88vQENZiRm0GRq6a+HPGQMd2k\nTQIhAKMSvzIBnni7ot/OSie2TmJLY4SwTQAevXysE2RbFDYdAiEBCUEaRQnMnbp7\n9mxDXDf6AU0cN/RPBjb9qSHDcWZHGzUCIG2Es59z8ugGrDY+pxLQnwfotadxd+Uy\nv/Ow5T0q5gIJAiEAyS4RaI9YG8EWx/2w0T67ZUVAw8eOMB6BIUg0Xcu+3okCIBOs\n/5OiPgoTdSy7bcF9IGpSE8ZgGKzgYQVZeN97YE00\n-----END RSA PRIVATE KEY-----",
+      "raw_value": "\"-----BEGIN RSA PRIVATE KEY-----\nMIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Qu\nKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQJAIJLixBy2qpFoS4DSmoEm\no3qGy0t6z09AIJtH+5OeRV1be+N4cDYJKffGzDa88vQENZiRm0GRq6a+HPGQMd2k\nTQIhAKMSvzIBnni7ot/OSie2TmJLY4SwTQAevXysE2RbFDYdAiEBCUEaRQnMnbp7\n9mxDXDf6AU0cN/RPBjb9qSHDcWZHGzUCIG2Es59z8ugGrDY+pxLQnwfotadxd+Uy\nv/Ow5T0q5gIJAiEAyS4RaI9YG8EWx/2w0T67ZUVAw8eOMB6BIUg0Xcu+3okCIBOs\n/5OiPgoTdSy7bcF9IGpSE8ZgGKzgYQVZeN97YE00\n-----END RSA PRIVATE KEY-----\"",
+      "line_number": 3,
+      "end_line": 11,
+      "quote_type": "double",
+      "is_exported": true,
+      "is_comment": false,
+      "is_empty": false
+    },
+    {
+      "key": "JWT_PUBLIC_KEY",
+      "value": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf\n9Cnzj4p4WGeKLs1Pt8QuKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQ==\n-----END PUBLIC KEY-----",
+      "raw_value": "'-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf\n9Cnzj4p4WGeKLs1Pt8QuKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQ==\n-----END PUBLIC KEY-----'",
+      "line_number": 12,
+      "end_line": 15,
+      "quote_type": "single",
+      "is_exported": false,
+      "is_comment": false,
+      "is_empty": false
+    },
+    {
+      "key": "ESCAPED_KEY",
+      "value": "-----BEGIN KEY-----\nabc123\n-----END KEY-----\n",
+      "raw_value": "\"-----BEGIN KEY-----\\nabc123\\n-----END KEY-----\\n\"",
+      "line_number": 16,
+      "end_line": 16,
+      "quote_type": "double",
+      "is_exported": false,
+      "is_comment": false,
+      "is_empty": false
+    },
+    {
+      "key": "TTL",
+      "value": "3600",
+      "raw_value": "3600",
+      "line_number": 17,
+      "end_line": 17,
+      "quote_type": "none",
+      "is_exported": false,
+      "is_comment": false,
+      "is_empty": false
+    }
+  ]
+}

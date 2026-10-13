@@ -1,0 +1,17 @@
+# Binaries
+/envy
+/dist/
+*.exe
+*.test
+*.out
+
+# Local env files (never commit real secrets)
+.env
+.env.*
+!.env.example
+!pkg/**/testdata/**
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
