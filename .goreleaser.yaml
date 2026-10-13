@@ -57,7 +57,7 @@ homebrew_casks:
     repository:
       owner: yassataiseer
       name: homebrew-tap
-      token: '{{ index .Env "HOMEBREW_TAP_GITHUB_TOKEN" }}'
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/yassataiseer/envy
     description: Diff, audit, and safely inject .env files from the terminal
     license: MIT
