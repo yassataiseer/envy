@@ -57,12 +57,12 @@ homebrew_casks:
     repository:
       owner: yassataiseer
       name: homebrew-tap
-      token: '{{ envOrDefault "HOMEBREW_TAP_GITHUB_TOKEN" "" }}'
+      token: '{{ index .Env "HOMEBREW_TAP_GITHUB_TOKEN" }}'
     homepage: https://github.com/yassataiseer/envy
     description: Diff, audit, and safely inject .env files from the terminal
     license: MIT
     # Publishing to the tap is skipped until the token secret is configured.
-    skip_upload: '{{ if eq (envOrDefault "HOMEBREW_TAP_GITHUB_TOKEN" "") "" }}true{{ else }}auto{{ end }}'
+    skip_upload: '{{ if index .Env "HOMEBREW_TAP_GITHUB_TOKEN" }}auto{{ else }}true{{ end }}'
     completions:
       bash: completions/envy.bash
       zsh: completions/envy.zsh
