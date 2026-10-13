@@ -27,6 +27,7 @@ func TestGolden(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			f.Path = filepath.ToSlash(f.Path)
 			got, err := json.MarshalIndent(f, "", "  ")
 			if err != nil {
 				t.Fatal(err)

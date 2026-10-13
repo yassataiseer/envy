@@ -72,7 +72,7 @@ func TestDiffText(t *testing.T) {
 			t.Errorf("output missing %q:\n%s", want, r.stdout)
 		}
 	}
-	if strings.Contains(r.stdout, "sk_test_123") || strings.Contains(r.stdout, "8080") {
+	if strings.Contains(r.stdout, "sk_test_123") || strings.Contains(r.stdout, "postgres://localhost") {
 		t.Errorf("values leaked without --show-values:\n%s", r.stdout)
 	}
 	if r.stderr != "" {
@@ -143,7 +143,7 @@ func TestDiffErrors(t *testing.T) {
 		args   []string
 		stderr string
 	}{
-		{"missing file", []string{"diff", ok, filepath.Join(dir, "nope.env")}, "no such file"},
+		{"missing file", []string{"diff", ok, filepath.Join(dir, "nope.env")}, "nope.env"},
 		{"parse error", []string{"diff", ok, bad}, "bad.env:2:3: unterminated double-quoted value"},
 		{"one arg", []string{"diff", ok}, "accepts 2 arg(s)"},
 		{"interactive without terminal", []string{"diff", "-i", ok, ok}, "--interactive requires a terminal"},

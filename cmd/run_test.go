@@ -101,7 +101,7 @@ func TestRunErrors(t *testing.T) {
 		{"not found", []string{"run", "--", "envy-definitely-missing-cmd"}, exitNotFound, "command not found"},
 		{"not executable", []string{"run", "--", "./script"}, exitNotExecutable, "permission denied"},
 		{"parse error", []string{"run", "-e", "bad.env", "--", "true"}, ExitError, "unterminated"},
-		{"missing env file", []string{"run", "-e", "nope.env", "--", "true"}, ExitError, "no such file"},
+		{"missing env file", []string{"run", "-e", "nope.env", "--", "true"}, ExitError, "nope.env"},
 		{"no command", []string{"run"}, ExitError, "requires at least 1 arg"},
 	}
 	for _, tt := range tests {

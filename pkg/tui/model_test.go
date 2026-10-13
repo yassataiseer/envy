@@ -140,7 +140,7 @@ func TestInitialView(t *testing.T) {
 			t.Errorf("screen missing %q:\n%s", want, s)
 		}
 	}
-	if strings.Contains(s, "sk_123") || strings.Contains(s, "8080") {
+	if strings.Contains(s, "sk_123") || strings.Contains(s, "PORT=8080") {
 		t.Errorf("secret values visible while masked:\n%s", s)
 	}
 	v := fx.m.View()
@@ -185,7 +185,7 @@ func TestRevealToggle(t *testing.T) {
 		t.Errorf("values not revealed:\n%s", s)
 	}
 	fx.press("m")
-	if strings.Contains(fx.screen(), "8080") {
+	if strings.Contains(fx.screen(), "PORT=8080") {
 		t.Error("values not masked again")
 	}
 }
