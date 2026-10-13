@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/yassataiseer/envy/pkg/audit"
 	"github.com/yassataiseer/envy/pkg/diff"
 	"github.com/yassataiseer/envy/pkg/envparse"
 )
@@ -128,11 +129,15 @@ func (m Model) renderBody() []string {
 // renderCell renders one pane's half of a row: a status gutter, then
 // KEY=value or a MISSING KEY placeholder, truncated to width.
 func (m Model) renderCell(r diff.DiffResult, s side, width int, selected bool) string {
-	gutter := " " + r.Status.Marker() + " "
-	if s == sideRight {
-		gutter = "  "
+	leak := " "
+	if fd, _, ok := m.finding(r.Key); ok && fd.Severity == audit.SeverityCritical {
+		leak = "!"
 	}
-	avail := width - ansi.StringWidth(gutter)
+	gutter := r.Status.Marker() + " "
+	if s == sideRight {
+		leak, gutter = "", "  "
+	}
+	avail := width - ansi.StringWidth(leak+gutter)
 
 	e := entryFor(r, s)
 	var keyText, valueText string
@@ -153,11 +158,12 @@ func (m Model) renderCell(r diff.DiffResult, s side, width int, selected bool) s
 		if s == m.focus {
 			style = m.theme.SelectedFocused
 		}
-		return style.Render(pad(gutter+keyText+valueText, width))
+		return style.Render(pad(leak+gutter+keyText+valueText, width))
 	}
 
 	statusStyle := m.theme.Status[r.Status]
 	var b strings.Builder
+	b.WriteString(m.theme.BarError.Render(leak))
 	b.WriteString(statusStyle.Render(gutter))
 	switch {
 	case e == nil:
@@ -208,6 +214,9 @@ func sanitize(s string) string {
 func (m Model) renderStatus() string {
 	left := m.renderMessage()
 	if left == "" {
+		left = m.renderFinding()
+	}
+	if left == "" {
 		left = m.renderSummary()
 	}
 
@@ -246,6 +255,23 @@ func (m Model) renderMessage() string {
 		style = m.theme.BarError
 	}
 	return style.Render(" " + m.message)
+}
+
+// renderFinding explains the selected key's security finding, if any.
+func (m Model) renderFinding() string {
+	r, ok := m.selected()
+	if !ok {
+		return ""
+	}
+	fd, s, ok := m.finding(r.Key)
+	if !ok {
+		return ""
+	}
+	style := m.theme.BarWarn
+	if fd.Severity == audit.SeverityCritical {
+		style = m.theme.BarError
+	}
+	return style.Render(fmt.Sprintf(" ! %s in %s: %s", fd.RuleID, m.shortName(s), fd.Message))
 }
 
 func (m Model) renderSummary() string {

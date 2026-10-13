@@ -397,6 +397,36 @@ func TestQuitFlow(t *testing.T) {
 	}
 }
 
+func TestLeakMarker(t *testing.T) {
+	fx := newFixture(t, testLeft, testRight)
+	lines := strings.Split(fx.screen(), "\n")
+	var leakLine string
+	for _, l := range lines {
+		if strings.Contains(l, "NEXT_PUBLIC_STRIPE_SECRET") {
+			leakLine = l
+		}
+		if strings.Contains(l, "PORT=") && strings.HasPrefix(l, "!") {
+			t.Errorf("PORT wrongly flagged: %q", l)
+		}
+	}
+	if !strings.HasPrefix(leakLine, "!- NEXT_PUBLIC_STRIPE_SECRET") {
+		t.Errorf("leak marker missing: %q", leakLine)
+	}
+
+	fx.selectKey(t, "NEXT_PUBLIC_STRIPE_SECRET")
+	if s := fx.screen(); !strings.Contains(s, "! SEC001 in .env: KEY 'NEXT_PUBLIC_STRIPE_SECRET' contains framework prefix") {
+		t.Errorf("finding not explained in status bar:\n%s", s)
+	}
+
+	fx.press("space")
+	if fd, s, ok := fx.m.finding("NEXT_PUBLIC_STRIPE_SECRET"); !ok || fd.Severity != "CRITICAL" || s != sideLeft {
+		t.Errorf("finding after copy = %+v %v %v", fd, s, ok)
+	}
+	if _, ok := fx.m.findings[sideRight]["NEXT_PUBLIC_STRIPE_SECRET"]; !ok {
+		t.Error("copied leak not detected in the right file")
+	}
+}
+
 func TestBackgroundColorMsg(t *testing.T) {
 	fx := newFixture(t, testLeft, testRight)
 	if fx.m.Init() == nil {

@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"github.com/yassataiseer/envy/pkg/audit"
 	"github.com/yassataiseer/envy/pkg/diff"
 	"github.com/yassataiseer/envy/pkg/envparse"
 )
@@ -53,10 +55,12 @@ type Model struct {
 	dirty [2]bool
 	opts  diff.Options
 
-	set    *diff.FileDiffSet
-	rows   []int // indices into set.Results that are currently visible
-	cursor int   // index into rows
-	offset int   // first visible row
+	set *diff.FileDiffSet
+	// findings holds the most severe security finding per key in each file.
+	findings [2]map[string]audit.AuditFinding
+	rows     []int // indices into set.Results that are currently visible
+	cursor   int   // index into rows
+	offset   int   // first visible row
 
 	width, height int
 	focus         side
@@ -345,6 +349,9 @@ func joinNames(names []string) string {
 // keepKey when it is still visible, otherwise at the same position.
 func (m *Model) recompute(keepKey string) {
 	m.set = diff.Compare(m.files[sideLeft], m.files[sideRight], m.opts)
+	for s := range m.files {
+		m.findings[s] = securityFindings(m.files[s])
+	}
 	m.rows = m.rows[:0]
 	newCursor := -1
 	for i, r := range m.set.Results {
@@ -360,6 +367,35 @@ func (m *Model) recompute(keepKey string) {
 		m.cursor = newCursor
 	}
 	m.clampScroll()
+}
+
+// securityFindings keeps the most severe WARNING-or-higher security finding
+// for each key. audit.Audit sorts by severity, so the first one wins.
+func securityFindings(f *envparse.EnvFile) map[string]audit.AuditFinding {
+	out := map[string]audit.AuditFinding{}
+	for _, fd := range audit.Audit(f, audit.DefaultOptions()) {
+		if !strings.HasPrefix(fd.RuleID, "SEC") || fd.Severity.Rank() < audit.SeverityWarning.Rank() {
+			continue
+		}
+		if _, seen := out[fd.Key]; !seen {
+			out[fd.Key] = fd
+		}
+	}
+	return out
+}
+
+// finding returns the most severe security finding for key across both
+// files, and the side it was found in.
+func (m *Model) finding(key string) (audit.AuditFinding, side, bool) {
+	l, inL := m.findings[sideLeft][key]
+	r, inR := m.findings[sideRight][key]
+	switch {
+	case inL && (!inR || l.Severity.Rank() >= r.Severity.Rank()):
+		return l, sideLeft, true
+	case inR:
+		return r, sideRight, true
+	}
+	return audit.AuditFinding{}, sideLeft, false
 }
 
 func (m *Model) moveCursor(delta int) {

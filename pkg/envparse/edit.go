@@ -65,6 +65,34 @@ func (f *EnvFile) assign(key, value, raw string, q QuoteType, bareExport bool) e
 	return nil
 }
 
+// SetAt assigns value to the assignment at Entries[i], quoting it as
+// needed. Unlike Set, it can target an earlier duplicate of a key.
+func (f *EnvFile) SetAt(i int, value string) error {
+	if i < 0 || i >= len(f.Entries) || !f.Entries[i].IsAssignment() {
+		return fmt.Errorf("envparse: entry %d is not an assignment", i)
+	}
+	e := &f.Entries[i]
+	e.RawValue, e.QuoteType = QuoteValue(value)
+	e.Value = value
+	e.IsBareExport = false
+	e.modified = true
+	return nil
+}
+
+// SetCommentAt replaces the text of the full-line comment at Entries[i].
+// text must start with '#' and must not contain a newline.
+func (f *EnvFile) SetCommentAt(i int, text string) error {
+	if i < 0 || i >= len(f.Entries) || !f.Entries[i].IsComment {
+		return fmt.Errorf("envparse: entry %d is not a comment", i)
+	}
+	if !strings.HasPrefix(text, "#") || strings.ContainsAny(text, "\r\n") {
+		return fmt.Errorf("envparse: invalid comment %q", text)
+	}
+	f.Entries[i].RawComment = text
+	f.Entries[i].modified = true
+	return nil
+}
+
 // Delete removes every occurrence of key and reports whether any existed.
 func (f *EnvFile) Delete(key string) bool {
 	kept := f.Entries[:0]
@@ -82,8 +110,9 @@ func (f *EnvFile) Delete(key string) bool {
 
 // QuoteValue returns a source representation of value that parses back to
 // exactly value. Simple values stay unquoted; anything containing
-// whitespace, quotes, '#', '$', backslashes, or control characters is
-// double-quoted with escapes, which keeps it on a single line.
+// whitespace, quotes, '#', '$', backslashes, shell metacharacters, or
+// control characters is double-quoted with escapes, which keeps it on a
+// single line and safe to source from a shell.
 func QuoteValue(value string) (raw string, q QuoteType) {
 	if !needsQuoting(value) {
 		return value, QuoteNone
@@ -115,7 +144,7 @@ func needsQuoting(v string) bool {
 		switch c := v[i]; {
 		case c <= ' ' || c == 0x7f:
 			return true
-		case c == '"' || c == '\'' || c == '`' || c == '#' || c == '$' || c == '\\':
+		case strings.IndexByte("\"'`#$\\<>|&;()", c) >= 0:
 			return true
 		}
 	}

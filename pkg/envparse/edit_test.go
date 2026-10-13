@@ -145,6 +145,25 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestSetAtAndSetCommentAt(t *testing.T) {
+	f := mustParse(t, "A=1\n# A=old\nA=2 # c\n")
+	if err := f.SetAt(0, "x y"); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.SetCommentAt(1, "# A="); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(f.Format()), "A=\"x y\"\n# A=\nA=2 # c\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	if f.SetAt(1, "v") == nil || f.SetAt(9, "v") == nil {
+		t.Error("SetAt should reject non-assignments and out-of-range indexes")
+	}
+	if f.SetCommentAt(0, "# x") == nil || f.SetCommentAt(1, "no hash") == nil || f.SetCommentAt(1, "# a\nB=1") == nil {
+		t.Error("SetCommentAt should reject invalid targets and text")
+	}
+}
+
 func TestQuoteValue(t *testing.T) {
 	tests := []struct {
 		in, raw string
@@ -160,6 +179,8 @@ func TestQuoteValue(t *testing.T) {
 		{`C:\dir`, `"C:\\dir"`, QuoteDouble},
 		{"line1\nline2", `"line1\nline2"`, QuoteDouble},
 		{"it's", `"it's"`, QuoteDouble},
+		{"<url>", `"<url>"`, QuoteDouble},
+		{"a=1&b=2", `"a=1&b=2"`, QuoteDouble},
 		{"héllo", "héllo", QuoteNone},
 	}
 	for _, tt := range tests {
