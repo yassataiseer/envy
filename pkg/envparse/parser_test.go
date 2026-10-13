@@ -52,6 +52,7 @@ func TestParse(t *testing.T) {
 
 		{"blank lines", "A=1\n\n  \nB=2", []EnvEntry{kv(1, "A", "1"), blank(2), blank(3), kv(4, "B", "2")}},
 		{"only newlines", "\n\n", []EnvEntry{blank(1), blank(2)}},
+		{"whitespace-only last line", "A=1\n  \t", []EnvEntry{kv(1, "A", "1"), blank(2)}},
 		{"full line comment", "# hello", []EnvEntry{comment(1, "# hello")}},
 		{"indented comment", "  # hello", []EnvEntry{comment(1, "# hello")}},
 		{"comment then key", "#c\nA=1", []EnvEntry{comment(1, "#c"), kv(2, "A", "1")}},

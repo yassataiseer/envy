@@ -59,9 +59,45 @@ func FuzzParse(f *testing.F) {
 			}
 		}
 
+		if !strings.Contains(string(data), "\r") {
+			if got := file.Format(); string(got) != string(data) {
+				t.Fatalf("unmodified file did not round-trip:\n got %q\nwant %q", got, data)
+			}
+		}
+
 		if err := Expand(file, nil); err != nil {
 			if _, ok := err.(*ExpandError); !ok {
 				t.Fatalf("non-ExpandError returned: %T %v", err, err)
+			}
+		}
+	})
+}
+
+func FuzzQuoteValue(f *testing.F) {
+	for _, s := range []string{"", "plain", "a b", "#x", "$HOME", `"\`, "a\nb", "'`", "\x00\x7f", "é ✓"} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, value string) {
+		file, err := ParseBytes([]byte("A=1\n"), "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := file.Set("A", value); err != nil {
+			t.Fatal(err)
+		}
+		if err := file.Set("NEW", value); err != nil {
+			t.Fatal(err)
+		}
+		reparsed, err := ParseBytes(file.Format(), "")
+		if err != nil {
+			t.Fatalf("formatted output does not parse: %v\n%q", err, file.Format())
+		}
+		if err := Expand(reparsed, nil); err != nil {
+			t.Fatalf("formatted output does not expand: %v", err)
+		}
+		for _, k := range []string{"A", "NEW"} {
+			if e, ok := reparsed.Get(k); !ok || e.Value != value {
+				t.Fatalf("%s round-tripped %q to %+v", k, value, e)
 			}
 		}
 	})

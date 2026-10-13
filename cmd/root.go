@@ -4,6 +4,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 
@@ -37,21 +38,35 @@ func (e *exitError) Error() string {
 
 func (e *exitError) Unwrap() error { return e.Err }
 
-var rootCmd = &cobra.Command{
-	Use:           "envy",
-	Short:         "Diff, validate, and inject .env files",
-	Long:          "Envy is a terminal-native tool for diffing, auditing, and safely injecting environment variables from .env files.",
-	Version:       resolveVersion(),
-	SilenceUsage:  true,
-	SilenceErrors: true,
+func newRootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:           "envy",
+		Short:         "Diff, validate, and inject .env files",
+		Long:          "Envy is a terminal-native tool for diffing, auditing, and safely injecting environment variables from .env files.",
+		Version:       resolveVersion(),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+	root.AddCommand(newParseCmd(), newDiffCmd())
+	return root
 }
 
-// Execute runs the root command and exits the process with the
-// appropriate exit code.
+// Execute runs the CLI with the process arguments and exits.
 func Execute() {
-	err := rootCmd.Execute()
+	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+}
+
+// run executes the CLI and returns the process exit code.
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	root := newRootCmd()
+	root.SetArgs(args)
+	root.SetIn(stdin)
+	root.SetOut(stdout)
+	root.SetErr(stderr)
+
+	err := root.Execute()
 	if err == nil {
-		return
+		return ExitOK
 	}
 	code := ExitError
 	var ee *exitError
@@ -60,9 +75,9 @@ func Execute() {
 		err = ee.Err
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "envy:", err)
+		fmt.Fprintln(stderr, "envy:", err)
 	}
-	os.Exit(code)
+	return code
 }
 
 func resolveVersion() string {

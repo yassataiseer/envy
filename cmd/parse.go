@@ -47,10 +47,6 @@ func newParseCmd() *cobra.Command {
 	return c
 }
 
-func init() {
-	rootCmd.AddCommand(newParseCmd())
-}
-
 func parseInput(stdin io.Reader, path string) (*envparse.EnvFile, error) {
 	if path == "-" {
 		return envparse.Parse(stdin, "<stdin>")

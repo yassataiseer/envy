@@ -79,6 +79,15 @@ type EnvEntry struct {
 	IsBareExport bool `json:"is_bare_export,omitempty"`
 	IsComment    bool `json:"is_comment"`
 	IsEmpty      bool `json:"is_empty"`
+
+	// modified marks entries changed through the editing API, which Format
+	// renders instead of copying from RawContent.
+	modified bool
+}
+
+// IsModified reports whether the entry was changed or added since parsing.
+func (e *EnvEntry) IsModified() bool {
+	return e.modified
 }
 
 // IsAssignment reports whether the entry defines a key.

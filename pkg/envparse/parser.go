@@ -101,7 +101,9 @@ func buildEntries(tokens []token) []EnvEntry {
 		case tokNewline:
 			flush(t.line)
 		case tokEOF:
-			if started {
+			// A whitespace-only final line still gets an entry so that
+			// Format can reproduce it.
+			if started || t.col > 1 {
 				flush(t.line)
 			}
 		}
