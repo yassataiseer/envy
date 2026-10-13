@@ -206,9 +206,9 @@ goreleaser release --snapshot --clean   # build all release archives locally
 vhs demo/demo.tape                      # re-record demo/envy.gif
 ```
 
-Releases are cut by pushing a `v*` tag. The release workflow needs a
-`HOMEBREW_TAP_GITHUB_TOKEN` secret with write access to
-`yassataiseer/homebrew-tap`.
+Releases are cut by pushing a `v*` tag. To also publish to Homebrew, the
+release workflow needs a `HOMEBREW_TAP_GITHUB_TOKEN` secret with write access
+to `yassataiseer/homebrew-tap`; without it, that step is skipped.
 
 ## License
 

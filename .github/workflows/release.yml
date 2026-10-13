@@ -26,4 +26,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Fine-grained token with contents:write on yassataiseer/homebrew-tap.
+          # If the secret is unset, the release skips publishing to Homebrew.
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
